@@ -6,6 +6,7 @@
 *.txt
 *.vy
 *.s
+*.out
 .bloop/
 .bsp/
 .metals/
