@@ -1,6 +1,6 @@
 So you've decided to help <s>me</s> us with LYCSAL. Good choice! You definitely won't regret it. Keep these things in mind while developing:
 1. LYCSAL is an exciting, next-generation compiler, and as such is subject to exciting, next-generation crashes. Segfaults are par for the course here.
-2. Relatedly: GDB is not your friend. If you can do any useful debugging with it, pleae ping me and explain how; otherwise, take a reeeeeal good look at the arguments you're passing to the problematic function.
+2. Relatedly: GDB is not your friend. If you can do any useful debugging with it, please ping me and explain how; otherwise, take a reeeeeal good look at the arguments you're passing to the problematic function.
 3. LLVM is byzantine and difficult to understand; JavaCPP even more so. Read the documentation and examples extremely carefully.
 
 You'll probably find these resources valuable:
