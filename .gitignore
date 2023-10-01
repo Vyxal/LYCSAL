@@ -1,0 +1,14 @@
+*.o
+*.log
+*.ll
+*.bc
+*.bit
+*.txt
+*.vy
+*.s
+.bloop/
+.bsp/
+.metals/
+.vscode/
+old/
+target/
