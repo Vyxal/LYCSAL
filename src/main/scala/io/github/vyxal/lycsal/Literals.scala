@@ -10,9 +10,10 @@ import org.bytedeco.javacpp.PointerPointer
 import org.bytedeco.javacpp.IntPointer
 
 class Literals(ts: TypeSupplier):
+    given TypeSupplier = ts
     def generateNumber(value: VNum)(using pointers: PointerStack, builder: LLVMBuilderRef) =
         if value.isValidInt then
-            pointers.pushStore(TypedValueRef(ts.i64, LLVMConstInt(ts.i64, value.toLong, 0)))
+            pointers.pushStore(TypedValueRef(TypeTag.Number, LLVMConstInt(ts.i64, value.toLong, 0)))
         else
             throw Error("Non-integer number")
 
@@ -54,7 +55,7 @@ class Literals(ts: TypeSupplier):
 
     def generateArray(items: Seq[TypedValueRef])(using pointers: PointerStack, builder: LLVMBuilderRef, context: LLVMContextRef) =
         val arrayPtr = LLVMBuildArrayAlloca(builder, ts.arrayItem, LLVMConstInt(ts.i64, items.size, 0), "allocarray")
-        pointers.push(TypedValueRef(ts.array, arrayPtr))
+        pointers.push(TypedValueRef(TypeTag.Array, arrayPtr))
         items.map(_._2).zipWithIndex.map((value, i) => {
             (value, LLVMBuildGEP2(builder, ts.arrayItem, arrayPtr, PointerPointer(1).put(LLVMConstInt(ts.i64, i, 0)), 1, s"set$i"))
         }).foreach(LLVMBuildStore(builder, _, _))
@@ -62,4 +63,4 @@ class Literals(ts: TypeSupplier):
     def generateString(value: String)(using pointers: PointerStack, builder: LLVMBuilderRef, context: LLVMContextRef) =
         val arrayPtr = LLVMBuildArrayAlloca(builder, ts.i8, LLVMConstInt(ts.i64, value.length + 1, 0), "allocstr")
         LLVMBuildStore(builder, LLVMConstString(value, value.length, 0), arrayPtr)
-        pointers.push(TypedValueRef(ts.string, arrayPtr))
+        pointers.push(TypedValueRef(TypeTag.Array, arrayPtr))

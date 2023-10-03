@@ -14,22 +14,22 @@ type Tetrad = (TypedValueRef, TypedValueRef, TypedValueRef, TypedValueRef) => Op
 type DirectFn = () => PointerStack ?=> List[TypedValueRef]
 
 sealed abstract class Implementer[F](val arity: Int):
-    def directify(impl: F)(using builder: LLVMBuilderRef): DirectFn
+    def directify(impl: F)(using builder: LLVMBuilderRef, ts: TypeSupplier): DirectFn
 
 // These four are pretty much the same thing right now
 
 object Monad extends Implementer[Monad](1):
-    override def directify(impl: Monad)(using builder: LLVMBuilderRef): DirectFn = 
+    override def directify(impl: Monad)(using builder: LLVMBuilderRef, ts: TypeSupplier): DirectFn = 
         () => pointers ?=> impl(pointers.popLoadWithType()).toList
 
 object Dyad extends Implementer[Dyad](2):
-    override def directify(impl: Dyad)(using builder: LLVMBuilderRef): DirectFn = 
+    override def directify(impl: Dyad)(using builder: LLVMBuilderRef, ts: TypeSupplier): DirectFn = 
         () => pointers ?=> impl(pointers.popLoadWithType(), pointers.popLoadWithType()).toList
 
 object Triad extends Implementer[Triad](3):
-    override def directify(impl: Triad)(using builder: LLVMBuilderRef): DirectFn = 
+    override def directify(impl: Triad)(using builder: LLVMBuilderRef, ts: TypeSupplier): DirectFn = 
         () => pointers ?=> impl(pointers.popLoadWithType(), pointers.popLoadWithType(), pointers.popLoadWithType()).toList
 
 object Tetrad extends Implementer[Tetrad](4):
-    override def directify(impl: Tetrad)(using builder: LLVMBuilderRef): DirectFn = 
+    override def directify(impl: Tetrad)(using builder: LLVMBuilderRef, ts: TypeSupplier): DirectFn = 
         () => pointers ?=> impl(pointers.popLoadWithType(), pointers.popLoadWithType(), pointers.popLoadWithType(), pointers.popLoadWithType()).toList

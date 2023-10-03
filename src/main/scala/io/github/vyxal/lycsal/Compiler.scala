@@ -24,6 +24,7 @@ class Compiler():
     final def generateIf(conditions: List[AST], bodies: List[AST], elseBody: Option[AST], returnBlockIn: Option[LLVMBasicBlockRef] = None)(using scope: Scope): Unit = 
         given LLVMBuilderRef = builder
         given LLVMContextRef = context
+        given TypeSupplier = ts
         _compile(conditions.head)
         val thenBlock = LLVMAppendBasicBlockInContext(context, scope.function, "then")
         val elifBlock = LLVMAppendBasicBlockInContext(context, scope.function, "elif")
@@ -47,9 +48,10 @@ class Compiler():
 
     def generateWhile(conditionIn: Option[AST], body: AST)(using scope: Scope) =
         given LLVMBuilderRef = builder
+        given TypeSupplier = ts
         scope.pointers.initCtxVar1(ts.i1)
         scope.pointers.initCtxVar2(ts.i64)
-        scope.pointers.setCtxVar2(TypedValueRef(ts.i64, LLVMConstInt(ts.i64, 0, 0)))
+        scope.pointers.setCtxVar2(TypedValueRef(TypeTag.Number, LLVMConstInt(ts.i64, 0, 0)))
         val loopEntryBlock = LLVMAppendBasicBlockInContext(context, scope.function, "loopentry")
         val loopBodyBlock = LLVMAppendBasicBlockInContext(context, scope.function, "loopbody")
         val loopExitBlock = LLVMAppendBasicBlockInContext(context, scope.function, "loopexit")
@@ -59,19 +61,20 @@ class Compiler():
             case Some(condition) =>
                 _compile(condition)
                 val condVal = i1ify(scope.pointers.popLoadWithType())(using ts)
-                scope.pointers.setCtxVar1(TypedValueRef(ts.i1, condVal))
+                scope.pointers.setCtxVar1(TypedValueRef(TypeTag.Boolean, condVal))
                 LLVMBuildCondBr(builder, condVal, loopBodyBlock, loopExitBlock)
             case None =>
-                scope.pointers.setCtxVar1(TypedValueRef(ts.i1, LLVMConstInt(ts.i1, 1, 0)))
+                scope.pointers.setCtxVar1(TypedValueRef(TypeTag.Boolean, LLVMConstInt(ts.i1, 1, 0)))
                 LLVMBuildBr(builder, loopBodyBlock)
         LLVMPositionBuilderAtEnd(builder, loopBodyBlock)
         _compile(body)
-        scope.pointers.setCtxVar2(TypedValueRef(ts.i64, LLVMBuildAdd(builder, scope.pointers.getCtxVar2(), LLVMConstInt(ts.i64, 1, 0), "increment-counter")))
+        scope.pointers.setCtxVar2(TypedValueRef(TypeTag.Number, LLVMBuildAdd(builder, scope.pointers.getCtxVar2(), LLVMConstInt(ts.i64, 1, 0), "increment-counter")))
         LLVMBuildBr(builder, loopEntryBlock)
         LLVMPositionBuilderAtEnd(builder, loopExitBlock)
 
     def generateTernary(thenBody: AST, elseBody: Option[AST])(using scope: Scope) =
         given LLVMBuilderRef = builder
+        given TypeSupplier = ts
         val condition = i1ify(scope.pointers.popLoadWithType())(using ts)
         val thenBlock = LLVMAppendBasicBlockInContext(context, scope.function, "then")
         val elseBlock = LLVMAppendBasicBlockInContext(context, scope.function, "else")
@@ -102,6 +105,7 @@ class Compiler():
 
     def _compile(ast: AST)(using scope: Scope): Unit = 
         given PointerStack = scope.pointers
+        given TypeSupplier = ts
         given LLVMContextRef = context
         given LLVMBuilderRef = builder
         ast match

@@ -12,10 +12,24 @@ import org.bytedeco.javacpp.PointerPointer
 import org.bytedeco.javacpp.Pointer
 import org.bytedeco.llvm.LLVM.LLVMModuleRef
 
-sealed case class TypedValueRef(ty: LLVMTypeRef, value: LLVMValueRef)
+enum TypeTag(val tag: Int):
+    case Number extends TypeTag(0)
+    case Boolean extends TypeTag(1)
+    case String extends TypeTag(2)
+    case Array extends TypeTag(3)
+
+    def apply()(using ts: TypeSupplier) = LLVMConstInt(ts.i8, this.tag, 0)
+    def underlying(using ts: TypeSupplier) = this match
+        case Number => ts.i64
+        case Boolean => ts.i1
+        case String => ts.string
+        case Array => ts.array
+
+sealed case class TypedValueRef(ty: TypeTag, value: LLVMValueRef)
 class TypeSupplier(context: LLVMContextRef, module: LLVMModuleRef):
     val i32 = LLVMInt32TypeInContext(context)
     val i64 = LLVMInt64TypeInContext(context)
+    val double = LLVMDoubleTypeInContext(context)
     val i1 = LLVMInt1TypeInContext(context)
     val i8 = LLVMInt8TypeInContext(context)
     val pointer = LLVMPointerTypeInContext(context, 0) // hopefully I got that last parameter right
@@ -29,11 +43,3 @@ class TypeSupplier(context: LLVMContextRef, module: LLVMModuleRef):
     val arrayItemSize = 64 + 8
     val array = LLVMArrayType(arrayItem, 0)
     val string = LLVMArrayType(i8, 0)
-
-    object libc:
-        // All libc external functions go here, not in RuntimeFunctions
-        val putsType = LLVMFunctionType(i64, PointerPointer(1).put(0, pointer), 1, 0)
-        val puts = LLVMAddFunction(module, "puts", putsType)
-
-        def puts(pointer: LLVMValueRef)(using builder: LLVMBuilderRef): Unit =
-            LLVMBuildCall2(builder, putsType, puts, PointerPointer(1).put(pointer), 1, "puts")

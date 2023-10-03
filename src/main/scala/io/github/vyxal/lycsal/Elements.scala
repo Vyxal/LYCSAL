@@ -14,14 +14,16 @@ case class Element(
 
 class Elements(val builder: LLVMBuilderRef, val ts: TypeSupplier, val util: RuntimeFunctions):
     given LLVMBuilderRef = builder
+    given TypeSupplier = ts
     val elements: Map[String, Element] = Map(
         // This one needs to be direct since puts() requires a pointer
         direct("p", "print", 1)((pointers: PointerStack) ?=> {
-            LLVMBuildCall2(builder, util.vyprintType, util.vyprint, PointerPointer(1).put(pointers.pop().value), 1, "")
+            val value = pointers.pop()
+            util.vyprint(Array(value.ty(), value.value))
             List()
         }),
         element(Dyad, "+", "add")((lhs: TypedValueRef, rhs: TypedValueRef) => {
-            Some(TypedValueRef(ts.i64, LLVMBuildAdd(builder, lhs.value, rhs.value, "add")))
+            Some(TypedValueRef(TypeTag.Number, LLVMBuildAdd(builder, lhs.value, rhs.value, "add")))
         })
     )
 

@@ -34,19 +34,19 @@ class PointerStack extends Stack[TypedValueRef]:
         ctxVar2 = None
 
 
-    def popLoad()(using builder: LLVMBuilderRef) = 
+    def popLoad()(using builder: LLVMBuilderRef, ts: TypeSupplier) = 
         val pointer = this.pop()
-        LLVMBuildLoad2(builder, pointer.ty, pointer.value, "load")
-    def peekLoad(using builder: LLVMBuilderRef) =
+        LLVMBuildLoad2(builder, pointer.ty.underlying, pointer.value, "load")
+    def peekLoad(using builder: LLVMBuilderRef, ts: TypeSupplier) =
         val pointer = this.top
-        LLVMBuildLoad2(builder, pointer.ty, pointer.value, "load")
-    def popLoadWithType()(using builder: LLVMBuilderRef) = 
+        LLVMBuildLoad2(builder, pointer.ty.underlying, pointer.value, "load")
+    def popLoadWithType()(using builder: LLVMBuilderRef, ts: TypeSupplier) = 
         val pointer = this.pop()
-        TypedValueRef(pointer.ty, LLVMBuildLoad2(builder, pointer.ty, pointer.value, "load"))
-    def peekLoadWithType(using builder: LLVMBuilderRef) =
+        TypedValueRef(pointer.ty, LLVMBuildLoad2(builder, pointer.ty.underlying, pointer.value, "load"))
+    def peekLoadWithType(using builder: LLVMBuilderRef, ts: TypeSupplier) =
         val pointer = this.top
-        TypedValueRef(pointer.ty, LLVMBuildLoad2(builder, pointer.ty, pointer.value, "load"))
-    def pushStore(value: TypedValueRef)(using builder: LLVMBuilderRef) = 
-        val pointer = LLVMBuildAlloca(builder, value.ty, "alloca")
+        TypedValueRef(pointer.ty, LLVMBuildLoad2(builder, pointer.ty.underlying, pointer.value, "load"))
+    def pushStore(value: TypedValueRef)(using builder: LLVMBuilderRef, ts: TypeSupplier) = 
+        val pointer = LLVMBuildAlloca(builder, value.ty.underlying, "alloca")
         LLVMBuildStore(builder, value.value, pointer)
         this.push(TypedValueRef(value.ty, pointer))
