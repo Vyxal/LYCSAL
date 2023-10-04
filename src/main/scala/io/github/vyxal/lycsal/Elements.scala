@@ -23,7 +23,7 @@ class Elements(val builder: LLVMBuilderRef, val ts: TypeSupplier, val util: Runt
             List()
         }),
         element(Dyad, "+", "add")((lhs: TypedValueRef, rhs: TypedValueRef) => {
-            Some(TypedValueRef(TypeTag.Number, LLVMBuildAdd(builder, lhs.value, rhs.value, "add")))
+            Some(TypedValueRef(NumberTypeSpec(NumberFormat.i64), LLVMBuildAdd(builder, lhs.value, rhs.value, "add")))
         })
     )
 

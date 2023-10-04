@@ -22,7 +22,7 @@ class Scope private(val parent: Option[Scope], val function: LLVMValueRef, val p
     private val ctxVars: mutable.Map[Int, CtxVarAccessor] = mutable.Map()
 
     def getCtxVar(index: Integer): Option[TypedValueRef] = ctxVars.get(index).map(_.get)
-    def withCtxVar(index: Integer, ty: TypeTag)(impl: (CtxVarAccessor) => Unit)(using builder: LLVMBuilderRef, ts: TypeSupplier) = 
+    def withCtxVar(index: Integer, ty: TypeSpec)(impl: (CtxVarAccessor) => Unit)(using builder: LLVMBuilderRef, ts: TypeSupplier) = 
         val accessor = CtxVarAccessor(ty, builder, ts)
         ctxVars.ensuring(!ctxVars.contains(index)).update(index, accessor)
         impl(accessor)
@@ -30,10 +30,8 @@ class Scope private(val parent: Option[Scope], val function: LLVMValueRef, val p
     def child = Scope(Some(this), this.function, PointerStack())
     def child(function: LLVMValueRef) = Scope(Some(this), function, PointerStack())
 
-    protected class CtxVarAccessor(private val ty: TypeTag, val builder: LLVMBuilderRef, val ts: TypeSupplier):
-        // TODO This is absolutely a bad idea! It'll crash if the underlying type is an array/string,
-        // which is why I'll be refactoring it very soon. For now, I'd just like to get this commit out.
-        private val pointer = LLVMBuildAlloca(builder, ty.underlying(using ts), "allocctx")
+    protected class CtxVarAccessor(private val ty: TypeSpec, val builder: LLVMBuilderRef, val ts: TypeSupplier):
+        private val pointer = ty.alloca(using builder, ts)
 
         def set(value: LLVMValueRef): Unit = LLVMBuildStore(builder, value, pointer)
         def get = TypedValueRef(ty, LLVMBuildLoad2(builder, ty.underlying(using ts), pointer, "load"))

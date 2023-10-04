@@ -49,8 +49,8 @@ class Compiler():
     def generateWhile(conditionIn: Option[AST], body: AST)(using scope: Scope) =
         given LLVMBuilderRef = builder
         given TypeSupplier = ts
-        scope.withCtxVar(0, TypeTag.Boolean)((ctxVar1) =>
-            scope.withCtxVar(1, TypeTag.Number)((ctxVar2) => 
+        scope.withCtxVar(0, BooleanTypeSpec())((ctxVar1) =>
+            scope.withCtxVar(1, NumberTypeSpec(NumberFormat.i64))((ctxVar2) => 
                 val loopEntryBlock = LLVMAppendBasicBlockInContext(context, scope.function, "loopentry")
                 val loopBodyBlock = LLVMAppendBasicBlockInContext(context, scope.function, "loopbody")
                 val loopExitBlock = LLVMAppendBasicBlockInContext(context, scope.function, "loopexit")

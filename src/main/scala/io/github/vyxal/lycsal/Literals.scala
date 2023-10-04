@@ -13,7 +13,7 @@ class Literals(ts: TypeSupplier):
     given TypeSupplier = ts
     def generateNumber(value: VNum)(using pointers: PointerStack, builder: LLVMBuilderRef) =
         if value.isValidInt then
-            pointers.pushStore(TypedValueRef(TypeTag.Number, LLVMConstInt(ts.i64, value.toLong, 0)))
+            pointers.pushStore(TypedValueRef(NumberTypeSpec(NumberFormat.i64), LLVMConstInt(ts.i64, value.toLong, 0)))
         else
             throw Error("Non-integer number")
 
@@ -54,15 +54,15 @@ class Literals(ts: TypeSupplier):
     //     generateArray(Stream.continually(ts.i8).zip(value.getBytes().map(LLVMConstInt(ts.i8, _, 0))))
 
     def generateArray(items: Seq[TypedValueRef])(using pointers: PointerStack, builder: LLVMBuilderRef, context: LLVMContextRef) =
-        val size = LLVMConstInt(ts.i64, items.size, 0)
-        val arrayPtr = LLVMBuildArrayAlloca(builder, ts.arrayItem, size, "allocarray")
-        pointers.push(TypedValueRef(TypeTag.Array, arrayPtr))
+        val spec = ArrayTypeSpec(LLVMConstInt(ts.i64, items.size, 0))
+        val arrayPtr = spec.alloca
+        pointers.push(TypedValueRef(spec, arrayPtr))
         items.map(_._2).zipWithIndex.map((value, i) => {
             (value, LLVMBuildGEP2(builder, ts.arrayItem, arrayPtr, PointerPointer(1).put(LLVMConstInt(ts.i64, i, 0)), 1, s"set$i"))
         }).foreach(LLVMBuildStore(builder, _, _))
 
     def generateString(value: String)(using pointers: PointerStack, builder: LLVMBuilderRef, context: LLVMContextRef) =
-        val size = LLVMConstInt(ts.i64, value.length + 1, 0)
-        val arrayPtr = LLVMBuildArrayAlloca(builder, ts.i8, size, "allocstr")
+        val spec = StringTypeSpec(LLVMConstInt(ts.i64, value.length + 1, 0))
+        val arrayPtr = spec.alloca
         LLVMBuildStore(builder, LLVMConstString(value, value.length, 0), arrayPtr)
-        pointers.push(TypedValueRef(TypeTag.Array, arrayPtr))
+        pointers.push(TypedValueRef(spec, arrayPtr))
