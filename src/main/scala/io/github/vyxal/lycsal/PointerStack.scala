@@ -13,27 +13,6 @@ import org.bytedeco.javacpp.Pointer
 import org.bytedeco.llvm.LLVM.LLVMModuleRef
 
 class PointerStack extends Stack[TypedValueRef]:
-    private var ctxVar1: Option[LLVMValueRef] = None
-    private var ctxVar2: Option[LLVMValueRef] = None
-    // I don't like this
-    def initCtxVar1(ty: LLVMTypeRef)(using builder: LLVMBuilderRef) =
-        ctxVar1 = Some(LLVMBuildAlloca(builder, ty, "ctxvar1alloc"))
-    def initCtxVar2(ty: LLVMTypeRef)(using builder: LLVMBuilderRef) =
-        ctxVar2 = Some(LLVMBuildAlloca(builder, ty, "ctxvar2alloc"))
-    def setCtxVar1(value: TypedValueRef)(using builder: LLVMBuilderRef) =
-        LLVMBuildStore(builder, value.ensuring(value.ty == LLVMGetAllocatedType(ctxVar1.get)).value, ctxVar1.get)
-    def setCtxVar2(value: TypedValueRef)(using builder: LLVMBuilderRef) =
-        LLVMBuildStore(builder, value.ensuring(value.ty == LLVMGetAllocatedType(ctxVar2.get)).value, ctxVar2.get)
-    def getCtxVar1()(using builder: LLVMBuilderRef) =
-        LLVMBuildLoad2(builder, LLVMGetAllocatedType(ctxVar1.get), ctxVar1.get, "ctxvar1")
-    def getCtxVar2()(using builder: LLVMBuilderRef) =
-        LLVMBuildLoad2(builder, LLVMGetAllocatedType(ctxVar2.get), ctxVar2.get, "ctxvar2")
-    def clearCtxVar1() =
-        ctxVar1 = None
-    def clearCtxVar2() =
-        ctxVar2 = None
-
-
     def popLoad()(using builder: LLVMBuilderRef, ts: TypeSupplier) = 
         val pointer = this.pop()
         LLVMBuildLoad2(builder, pointer.ty.underlying, pointer.value, "load")

@@ -12,20 +12,20 @@ import org.bytedeco.javacpp.PointerPointer
 import org.bytedeco.javacpp.Pointer
 import org.bytedeco.llvm.LLVM.LLVMModuleRef
 
-enum TypeTag(val tag: Int):
-    case Number extends TypeTag(0)
-    case Boolean extends TypeTag(1)
-    case String extends TypeTag(2)
-    case Array extends TypeTag(3)
+enum TypeTag:
+    case Number extends TypeTag
+    case Boolean extends TypeTag
+    case String extends TypeTag
+    case Array extends TypeTag
 
-    def apply()(using ts: TypeSupplier) = LLVMConstInt(ts.i8, this.tag, 0)
+    def tag(using ts: TypeSupplier): LLVMValueRef = LLVMConstInt(ts.i64, this.ordinal, 0)
     def underlying(using ts: TypeSupplier) = this match
         case Number => ts.i64
         case Boolean => ts.i1
         case String => ts.string
         case Array => ts.array
 
-sealed case class TypedValueRef(ty: TypeTag, value: LLVMValueRef)
+final case class TypedValueRef(ty: TypeTag, value: LLVMValueRef)
 class TypeSupplier(context: LLVMContextRef, module: LLVMModuleRef):
     val i32 = LLVMInt32TypeInContext(context)
     val i64 = LLVMInt64TypeInContext(context)

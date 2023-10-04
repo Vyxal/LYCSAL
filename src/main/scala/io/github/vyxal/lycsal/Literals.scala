@@ -54,13 +54,15 @@ class Literals(ts: TypeSupplier):
     //     generateArray(Stream.continually(ts.i8).zip(value.getBytes().map(LLVMConstInt(ts.i8, _, 0))))
 
     def generateArray(items: Seq[TypedValueRef])(using pointers: PointerStack, builder: LLVMBuilderRef, context: LLVMContextRef) =
-        val arrayPtr = LLVMBuildArrayAlloca(builder, ts.arrayItem, LLVMConstInt(ts.i64, items.size, 0), "allocarray")
+        val size = LLVMConstInt(ts.i64, items.size, 0)
+        val arrayPtr = LLVMBuildArrayAlloca(builder, ts.arrayItem, size, "allocarray")
         pointers.push(TypedValueRef(TypeTag.Array, arrayPtr))
         items.map(_._2).zipWithIndex.map((value, i) => {
             (value, LLVMBuildGEP2(builder, ts.arrayItem, arrayPtr, PointerPointer(1).put(LLVMConstInt(ts.i64, i, 0)), 1, s"set$i"))
         }).foreach(LLVMBuildStore(builder, _, _))
 
     def generateString(value: String)(using pointers: PointerStack, builder: LLVMBuilderRef, context: LLVMContextRef) =
-        val arrayPtr = LLVMBuildArrayAlloca(builder, ts.i8, LLVMConstInt(ts.i64, value.length + 1, 0), "allocstr")
+        val size = LLVMConstInt(ts.i64, value.length + 1, 0)
+        val arrayPtr = LLVMBuildArrayAlloca(builder, ts.i8, size, "allocstr")
         LLVMBuildStore(builder, LLVMConstString(value, value.length, 0), arrayPtr)
         pointers.push(TypedValueRef(TypeTag.Array, arrayPtr))

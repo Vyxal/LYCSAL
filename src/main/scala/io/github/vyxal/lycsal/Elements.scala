@@ -19,7 +19,7 @@ class Elements(val builder: LLVMBuilderRef, val ts: TypeSupplier, val util: Runt
         // This one needs to be direct since puts() requires a pointer
         direct("p", "print", 1)((pointers: PointerStack) ?=> {
             val value = pointers.pop()
-            util.vyprint(Array(value.ty(), value.value))
+            util.vyprint(Array(value.ty.tag, value.value))
             List()
         }),
         element(Dyad, "+", "add")((lhs: TypedValueRef, rhs: TypedValueRef) => {
